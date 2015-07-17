@@ -14,9 +14,11 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
 
     private DynamicListView mDynamicListView;
-    private ArrayList<String> mDataList = new ArrayList<String>();
+    private ArrayList<BookmarkBean> mDataList = new ArrayList<BookmarkBean>();
     private TextView mEditBookmark;
     private DragAndDropAdapter mDragAndDropAdapter;
+    
+    private static final int DATA_COUNT = 20;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +38,18 @@ public class MainActivity extends Activity {
             
             @Override
             public void onClick(View v) {
+                
+                if (mEditBookmark.getText().equals(getApplicationContext().getResources().getString(R.string.bookmark_edit))) {
+                    mEditBookmark.setText(getApplication().getResources().getString(R.string.bookmark_edit_finish));
+                    boolean isEdit = true;
+                    changeDataToEditState(isEdit);
+                } else {
+                    mEditBookmark.setText(getApplication().getResources().getString(R.string.bookmark_edit));
+                    boolean isEdit = false;
+                    changeDataToEditState(isEdit);
+                }
+                mDragAndDropAdapter.notifyDataSetChanged();
+                
 //                if (!mDragAndDropAdapter.getEditEnable()) {
 //                    mDragAndDropAdapter.setEditEnable(true);
 ////                    mDynamicListView.invalidateViews();
@@ -71,8 +85,17 @@ public class MainActivity extends Activity {
     }
     
     private void initData() {
-        for (int i = 0; i < 20; i++) {
-            mDataList.add("This is row number " + i);
+        for (int i = 0; i < DATA_COUNT; i++) {
+            String title = "this is title " + i;
+            String url = "this is url " + i;
+            boolean isEdit = false;
+            mDataList.add(new BookmarkBean(title, url, isEdit));
+        }
+    }
+    
+    private void changeDataToEditState(boolean isEdit) {
+        for (int i=0; i<DATA_COUNT; ++i) {
+            ((BookmarkBean)mDataList.get(i)).setIsEdit(isEdit);
         }
     }
 }
