@@ -1,0 +1,45 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.draganddrop.MainActivity" >
+
+    <RelativeLayout 
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@android:color/white"
+        android:layout_alignParentBottom="true">
+        
+        <TextView
+            android:id="@+id/edit_bookmark"
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:text="编辑"
+            android:gravity="center"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="10dp"/>
+        
+    </RelativeLayout>
+    
+    <TextView
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@android:color/black"
+        android:layout_above="@id/toolbar"/>
+    
+	<com.example.draganddrop.DynamicListView 
+	    android:id="@+id/activity_dynamiclistview_listview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="0dp"
+        android:layout_above="@id/divider"
+        android:clipToPadding="false"
+        android:divider="@null"
+        android:paddingBottom="48dp"
+        android:listSelector="@drawable/click_selector"
+        android:overScrollHeader="@drawable/ic_launcher"
+        android:overScrollMode="always"/>
+
+</RelativeLayout>
