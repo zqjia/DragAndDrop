@@ -19,7 +19,7 @@ public class BitmapUtils {
      * Returns a bitmap showing a screenshot of the view passed in.
      */
     @NonNull
-    static Bitmap getBitmapFromView(@NonNull final View v) {
+    static Bitmap getBitmapFromView(final View v) {
         Bitmap bitmap = Bitmap.createBitmap(v.getMeasuredWidth(), v.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         v.draw(canvas);

@@ -15,6 +15,7 @@ public class HoverDrawable extends BitmapDrawable{
     
     /**
      * The original y coordinate of the top of given {@code View}.
+     * it will be changed while the {@code ListView} is scrolling
      */
     private float mOriginalY;
 
@@ -34,7 +35,7 @@ public class HoverDrawable extends BitmapDrawable{
      * @param view the {@code View} to represent.
      * @param ev   the {@code MotionEvent} to use as down position.
      */
-    HoverDrawable(@NonNull final View view, @NonNull final MotionEvent ev) {
+    HoverDrawable(final View view, final MotionEvent ev) {
         this(view, ev.getY());
     }
 
@@ -78,6 +79,8 @@ public class HoverDrawable extends BitmapDrawable{
     void onScroll(final float mobileViewTopY) {
         mScrollDistance += mOriginalY - mobileViewTopY;
         mOriginalY = mobileViewTopY;
+        LogUtil.e(TAG, "on scroll----------> mOriginalY is " + mOriginalY
+                + " and scroll distance is " + mScrollDistance);
     }
 
     /**
@@ -116,6 +119,7 @@ public class HoverDrawable extends BitmapDrawable{
      */
     void setTop(final int top) {
         setBounds(getBounds().left, top, getBounds().left + getIntrinsicWidth(), top + getIntrinsicHeight());
+        LogUtil.e(TAG, "setTop-------------> the bounds top is " + getBounds().top);
     }
 
     /**

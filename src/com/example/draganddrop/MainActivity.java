@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewTreeObserver.OnDrawListener;
 import android.widget.TextView;
 
 
@@ -17,6 +18,8 @@ public class MainActivity extends Activity {
     private ArrayList<BookmarkBean> mDataList = new ArrayList<BookmarkBean>();
     private TextView mEditBookmark;
     private DragAndDropAdapter mDragAndDropAdapter;
+    
+    private boolean mShouldAnimator = true;
     
     private static final int DATA_COUNT = 20;
     
@@ -41,33 +44,55 @@ public class MainActivity extends Activity {
                 
                 if (mEditBookmark.getText().equals(getApplicationContext().getResources().getString(R.string.bookmark_edit))) {
                     mEditBookmark.setText(getApplication().getResources().getString(R.string.bookmark_edit_finish));
-                    boolean isEdit = true;
-                    changeDataToEditState(isEdit);
+                    mShouldAnimator = true;
+                    
+                    changeDataToEditState(mShouldAnimator);
                 } else {
                     mEditBookmark.setText(getApplication().getResources().getString(R.string.bookmark_edit));
-                    boolean isEdit = false;
-                    changeDataToEditState(isEdit);
+                    mShouldAnimator = false;
+                    changeDataToEditState(mShouldAnimator);
                 }
                 mDragAndDropAdapter.notifyDataSetChanged();
                 
-//                if (!mDragAndDropAdapter.getEditEnable()) {
-//                    mDragAndDropAdapter.setEditEnable(true);
-////                    mDynamicListView.invalidateViews();
-//                    mDragAndDropAdapter.notifyDataSetChanged();
-//                    mDynamicListView.enableDragAndDrop();
-//                    mDynamicListView.setDraggableManager(new DraggableManager(R.id.bookmark_edit_drag));
-//                    mEditBookmark.setText("完成");
-//                } else {
-//                    mDragAndDropAdapter.setEditEnable(false);
-//                    mDragAndDropAdapter.notifyDataSetChanged();
-//                    mEditBookmark.setText("編輯");
-//                }
+                mDynamicListView.getViewTreeObserver().addOnDrawListener(new OnDrawListener() {
+                    
+                    @Override
+                    public void onDraw() {
+                        if (mShouldAnimator && mEditBookmark.getText().equals(getApplicationContext().getResources().getString(R.string.bookmark_edit_finish))) {
+                            mShouldAnimator = false;
+                            animatorListView();
+                        }
+                    }
+                });
                 
             }
         });
         
     }
 
+    private void animatorListView() {
+        for(int i=0, total=mDynamicListView.getChildCount(); i<total; ++i) {
+            View itemView = mDynamicListView.getChildAt(i);
+            View checkBox = itemView.findViewById(R.id.bookmark_edit_checkbox);
+            View editor = itemView.findViewById(R.id.bookmark_edit_editor);
+            View drag = itemView.findViewById(R.id.bookmark_edit_drag);
+            
+            checkBox.setTranslationX(-100);
+            checkBox.setAlpha(0f);
+            checkBox.setVisibility(View.VISIBLE);
+            checkBox.animate().translationX(0f).alpha(1f).setDuration(150).start();
+            
+            editor.setTranslationX(100);
+            editor.setAlpha(0f);
+            editor.setVisibility(View.VISIBLE);
+            editor.animate().translationX(0f).alpha(1f).setDuration(150).start();
+            
+            drag.setTranslationX(100f);
+            drag.setAlpha(0f);
+            drag.setVisibility(View.VISIBLE);
+            drag.animate().translationX(0f).alpha(1f).setDuration(150l).start();
+        }
+    }    
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

@@ -1,21 +1,17 @@
 package com.example.draganddrop;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.os.Build;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
@@ -28,13 +24,6 @@ public class DynamicListView extends ListView {
     private DragAndDropHandler mDragAndDropHandler;
     private TouchEventHandler mCurrentTouchEventHandler;
     
-    {
-        //just test 
-        Button button = new Button(getContext());
-        LinearLayout l = new LinearLayout(getContext());
-//        Adapter adapter = new Adapter();
-    }
-    
     public DynamicListView(final Context context) {
         this(context, null);
     }
@@ -43,7 +32,7 @@ public class DynamicListView extends ListView {
         this(context, attrs, Resources.getSystem().getIdentifier("listViewStyle", "attr", "android"));
     }
     
-    public DynamicListView(@NonNull final Context context, @Nullable final AttributeSet attrs, final int defStyle) {
+    public DynamicListView(final Context context, @Nullable final AttributeSet attrs, final int defStyle) {
         super(context, attrs, defStyle);
 
         mDynamicOnScrollListener = new DynamicOnScrollListener();
@@ -55,9 +44,9 @@ public class DynamicListView extends ListView {
     }
     
     public void enableDragAndDrop() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            throw new UnsupportedOperationException("Drag and drop is only supported API levels 14 and up!");
-        }
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+//            throw new UnsupportedOperationException("Drag and drop is only supported API levels 14 and up!");
+//        }
 
         mDragAndDropHandler = new DragAndDropHandler(this);
     }
@@ -68,7 +57,7 @@ public class DynamicListView extends ListView {
         if (mDragAndDropHandler != null) {
             mDragAndDropHandler.setAdapter(adapter);
         } else {
-            LogUtil.e(TAG, "DragAndDropHandler is null");
+            LogUtil.e(TAG, "DragAndDropHandler is null and can't support drag now");
         }
     }
     
@@ -161,7 +150,6 @@ public class DynamicListView extends ListView {
             mDragAndDropHandler.startDragging(position);
         }
     }
-    
 
     /**
      * Sets the scroll speed when dragging an item. Defaults to {@code 1.0f}.
@@ -170,33 +158,36 @@ public class DynamicListView extends ListView {
      *
      * @param speed {@code <1.0f} to slow down scrolling, {@code >1.0f} to speed up scrolling.
      */
-/*    public void setScrollSpeed(final float speed) {
+    public void setScrollSpeed(final float speed) {
         if (mDragAndDropHandler != null) {
             mDragAndDropHandler.setScrollSpeed(speed);
         }
-    }*/
+    }
     
     private class DynamicOnScrollListener implements OnScrollListener {
 
-        private OnScrollListener mOnScrollListener;
+        private Collection<OnScrollListener> mOnScrollListeners = new HashSet<OnScrollListener>();
         
         @Override
         public void onScrollStateChanged(AbsListView view, int scrollState) {
-            if (mOnScrollListener != null) {
-                mOnScrollListener.onScrollStateChanged(view, scrollState);
+            if (mOnScrollListeners != null) {
+                for (OnScrollListener onScrollListener : mOnScrollListeners)
+                onScrollListener.onScrollStateChanged(view, scrollState);
             }
         }
 
         @Override
         public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
                 int totalItemCount) {
-            if (mOnScrollListener != null) {
-                mOnScrollListener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+            if (mOnScrollListeners != null) {
+                for (OnScrollListener onScrollListener : mOnScrollListeners) {
+                    onScrollListener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+                }
             }
         }
         
         public void setOnScrollListener(OnScrollListener listener) {
-            mOnScrollListener = listener;
+            mOnScrollListeners.add(listener);
         }
     }
 }

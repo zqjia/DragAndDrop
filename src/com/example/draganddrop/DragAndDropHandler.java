@@ -343,15 +343,16 @@ public class DragAndDropHandler implements TouchEventHandler{
         long belowItemId = position + 1 - mDragAndDropListViewWrapper.getHeaderViewsCount() < mAdapter.getCount()
                            ? mAdapter.getItemId(position + 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
                            : INVALID_ID;
-                           LogUtil.e(TAG, "above id is " + aboveItemId + " below id is " + belowItemId);
+//                           LogUtil.e(TAG, "above id is " + aboveItemId + " below id is " + belowItemId);
 
         final long switchId = mHoverDrawable.isMovingUpwards() ? aboveItemId : belowItemId;
         View switchView = getViewForId(switchId);
 
         final int deltaY = mHoverDrawable.getDeltaY();  
-        //getIntrinsicHeight获取drawable对象的高度
         if (switchView != null && Math.abs(deltaY) > mHoverDrawable.getIntrinsicHeight()) {
-            LogUtil.e(TAG, "swift view");
+            LogUtil.e(TAG, "swift view" 
+                    + "delta y is " + deltaY
+                    + " and HoverDrawable height is " + mHoverDrawable.getIntrinsicHeight());
             switchViews(switchView, switchId, mHoverDrawable.getIntrinsicHeight() * (deltaY < 0 ? -1 : 1)); 
         }
 
@@ -377,8 +378,8 @@ public class DragAndDropHandler implements TouchEventHandler{
         final int switchViewPosition = mDragAndDropListViewWrapper.getPositionForView(switchView);
         
         int mobileViewPosition = mDragAndDropListViewWrapper.getPositionForView(mMobileView);
-        LogUtil.e(TAG, "switch view position is " + switchViewPosition 
-                + " and mobile view position is" +  mobileViewPosition);
+//        LogUtil.e(TAG, "switch view position is " + switchViewPosition 
+//                + " and mobile view position is" +  mobileViewPosition);
 
         ((Swappable) mAdapter).swapItems(switchViewPosition - mDragAndDropListViewWrapper.getHeaderViewsCount(), 
                     mobileViewPosition - mDragAndDropListViewWrapper.getHeaderViewsCount());

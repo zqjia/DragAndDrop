@@ -1,8 +1,8 @@
+
 package com.example.draganddrop;
 
 import java.util.ArrayList;
 
-import android.R.integer;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,31 +12,30 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-
 public class DragAndDropAdapter extends BaseAdapter implements Swappable {
 
     private static final String TAG = DragAndDropAdapter.class.getSimpleName();
-    
+
     private ArrayList<BookmarkBean> mDataList = new ArrayList<BookmarkBean>();
     private LayoutInflater mLayoutInflater;
-    
+
     private static final int INVALID_STATE = -1;
     private static final int NOT_IN_EDIT_STATE = 0;
     private static final int IN_EDIT_STATE = 1;
     private static final int VIEW_TYPE_COUNT = 2;
-    
+
     public DragAndDropAdapter(Context context, ArrayList<BookmarkBean> list) {
         if (list != null && !list.isEmpty()) {
             mDataList = list;
         }
         mLayoutInflater = LayoutInflater.from(context);
     }
-    
+
     public void setData(ArrayList<BookmarkBean> list) {
         mDataList = list;
         notifyDataSetChanged();
     }
-    
+
     @Override
     public int getCount() {
         return mDataList.size();
@@ -51,7 +50,7 @@ public class DragAndDropAdapter extends BaseAdapter implements Swappable {
     public long getItemId(int position) {
         return getItem(position).hashCode();
     }
-    
+
     @Override
     public int getItemViewType(int position) {
         BookmarkBean item = (BookmarkBean)getItem(position);
@@ -69,6 +68,7 @@ public class DragAndDropAdapter extends BaseAdapter implements Swappable {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+
         ViewHolder viewHolder;
         final BookmarkBean item = (BookmarkBean)getItem(position);
         int viewType = INVALID_STATE;
@@ -77,17 +77,25 @@ public class DragAndDropAdapter extends BaseAdapter implements Swappable {
         } else {
             viewType = NOT_IN_EDIT_STATE;
         }
-        
+
         if (convertView == null) {
             viewHolder = new ViewHolder();
             switch (viewType) {
                 case IN_EDIT_STATE:
                     convertView = mLayoutInflater.inflate(R.layout.drag_item_edit, parent, false);
-                    viewHolder.bookmarkText = (TextView)convertView.findViewById(R.id.bookmark_edit_text);
+                    viewHolder.bookmarkText = (TextView)convertView
+                            .findViewById(R.id.bookmark_edit_text);
+                    viewHolder.bookmarkCheckbox = (CheckBox)convertView
+                            .findViewById(R.id.bookmark_edit_checkbox);
+                    viewHolder.bookmarkDrag = (ImageView)convertView
+                            .findViewById(R.id.bookmark_edit_drag);
+                    viewHolder.bookmarkEdit = (ImageView)convertView
+                            .findViewById(R.id.bookmark_edit_editor);
                     break;
                 case NOT_IN_EDIT_STATE:
                     convertView = mLayoutInflater.inflate(R.layout.drag_item, parent, false);
-                    viewHolder.bookmarkText = (TextView)convertView.findViewById(R.id.bookmark_text);
+                    viewHolder.bookmarkText = (TextView)convertView
+                            .findViewById(R.id.bookmark_text);
                     break;
                 default:
                     LogUtil.e(TAG, "view type is not correct");
@@ -97,92 +105,20 @@ public class DragAndDropAdapter extends BaseAdapter implements Swappable {
         } else {
             viewHolder = (ViewHolder)convertView.getTag();
         }
-        
+
         final String bookmarkTitle = item.getTitle();
         viewHolder.bookmarkText.setText(bookmarkTitle);
-        
-        
-        return convertView;
-        
-/*        if (!mIsEdited) {
-            LogUtil.e(TAG, "------>not in edit state");
-            if (convertView == null) {
-                viewHolder = new ViewHolder();
-                LogUtil.e(TAG, "inflate drag_item layout");
-                convertView = mLayoutInflater.inflate(R.layout.drag_item, parent, false);
-                viewHolder.bookmarkText = (TextView)convertView.findViewById(R.id.bookmark_text);
-                convertView.setTag(viewHolder);
-            } else {
-                viewHolder = (ViewHolder)convertView.getTag();
-                if (viewHolder.bookmarkCheckbox != null) {
-                    LogUtil.e(TAG, "in no edit state convert view can't reuser");
-                }
-                
-                convertView = mLayoutInflater.inflate(R.layout.drag_item, parent, false);
-                viewHolder.bookmarkText = (TextView)convertView.findViewById(R.id.bookmark_text);
-                convertView.setTag(viewHolder);
-                
-            }
-        } else {
-            LogUtil.e(TAG, "------------>in edit state");
-            if (convertView == null) {
-                
-                viewHolder = new ViewHolder();
-                LogUtil.e(TAG, "---------->inflate drag_item_edit layout");
-                convertView = mLayoutInflater.inflate(R.layout.drag_item_edit, parent, false);
-                
-                viewHolder.bookmarkText = (TextView)convertView.findViewById(R.id.bookmark_edit_text);
-                viewHolder.bookmarkCheckbox = (CheckBox)convertView.findViewById(R.id.bookmark_edit_checkbox);
-                viewHolder.bookmarkIndicator = (ImageView)convertView.findViewById(R.id.bookmark_edit_indicator);
-                viewHolder.bookmarkEdit = (ImageView)convertView.findViewById(R.id.bookmark_edit_editor);
-                viewHolder.bookmarkDrag = (ImageView)convertView.findViewById(R.id.bookmark_edit_drag);
-                convertView.setTag(viewHolder);
-            } else {
-                viewHolder = (ViewHolder)convertView.getTag();
-                if (viewHolder.bookmarkCheckbox == null) {
-                    LogUtil.e(TAG, "in edit state convert view can't reuse");
-                }
-                
-                convertView = mLayoutInflater.inflate(R.layout.drag_item_edit, parent, false);
-                viewHolder.bookmarkText = (TextView)convertView.findViewById(R.id.bookmark_edit_text);
-                viewHolder.bookmarkCheckbox = (CheckBox)convertView.findViewById(R.id.bookmark_edit_checkbox);
-                viewHolder.bookmarkIndicator = (ImageView)convertView.findViewById(R.id.bookmark_edit_indicator);
-                viewHolder.bookmarkEdit = (ImageView)convertView.findViewById(R.id.bookmark_edit_editor);
-                viewHolder.bookmarkDrag = (ImageView)convertView.findViewById(R.id.bookmark_edit_drag);
-                convertView.setTag(viewHolder);
-            }
-        }
-        
-        
-        final String text = (String)mDataList.get(position);
-        viewHolder.bookmarkText.setText(text);
-        return convertView;*/
-        
-    
-        //FIXME
-        //下面是没有编辑状态改变的代码
-      /*  if (convertView == null) {
-            viewHolder = new ViewHolder();
-            convertView = mLayoutInflater.inflate(R.layout.drag_item_edit, parent, false);
-            viewHolder.bookmarkText = (TextView)convertView.findViewById(R.id.bookmark_edit_text);
-            convertView.setTag(viewHolder);
-        } else {
-            viewHolder = (ViewHolder)convertView.getTag();
-        }
-        
-        final String text = (String)mDataList.get(position);
-        viewHolder.bookmarkText.setText(text);
-        
-        return convertView;*/
-    }
 
+        return convertView;
+    }
+    
     @Override
     public void swapItems(int positionOne, int positionTwo) {
         BookmarkBean firstItem = mDataList.set(positionOne, (BookmarkBean)getItem(positionTwo));
         mDataList.set(positionTwo, firstItem);
         notifyDataSetChanged();
     }
-    
+
     private class ViewHolder {
         CheckBox bookmarkCheckbox;
         ImageView bookmarkIndicator;
