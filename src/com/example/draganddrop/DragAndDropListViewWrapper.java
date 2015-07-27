@@ -6,7 +6,7 @@ import android.widget.AbsListView;
 import android.widget.ListAdapter;
 
 /**
- * 一个DynamicListView和 
+ * a wrap of ListView 
  * */
 
 public interface DragAndDropListViewWrapper {
@@ -30,6 +30,8 @@ public interface DragAndDropListViewWrapper {
     ListAdapter getAdapter();
     
     void smoothScrollBy(int distance, int duration);
+    
+    void smoothScrollToPosition(int position);
     
     void setDynamicOnScrollListener(AbsListView.OnScrollListener onScrollListener);
     

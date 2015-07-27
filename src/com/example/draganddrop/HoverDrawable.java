@@ -1,8 +1,6 @@
 package com.example.draganddrop;
 
 import android.graphics.drawable.BitmapDrawable;
-import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -60,14 +58,18 @@ public class HoverDrawable extends BitmapDrawable{
      *           {@code ev.getActionMasked()} should typically equal {@link MotionEvent#ACTION_MOVE}.
      */
     void handleMoveEvent(final MotionEvent ev) {
-        //从Log分析来看，mScrollDistance一直都是0
-        //event y 一直都在变化
-        //(mOriginY - mDownY)则没有变化
-  /*      LogUtil.e(TAG, "event y is " + ev.getY() + "\nmOriginalY - mDownY is " + (mOriginalY - mDownY) 
-                + "\n"
-                + "mScrollDistance is " + mScrollDistance); */
+        /* when the DynamicListView is not scroll, the ev.getY() is changed */
+        /* and dragging the item to the top or the bottom, the ev.getY() change little and now the mScrollDistance change */
         
-        int top = (int) (mOriginalY - mDownY + ev.getY() + mScrollDistance);
+        //(mOriginY - mDownY)则没有变化
+        
+//        LogUtil.e(TAG, "event y is " + ev.getY() + "\nmOriginalY - mDownY is " + (mOriginalY - mDownY) 
+//                + "\n"
+//                + "mScrollDistance is " + mScrollDistance); 
+        
+        //FIXME
+//        int top = (int) (mOriginalY - mDownY + ev.getY() + mScrollDistance);
+        int top = (int) (mOriginalY - mDownY + ev.getY() + mScrollDistance);        
         setTop(top);
     }
 
@@ -79,8 +81,9 @@ public class HoverDrawable extends BitmapDrawable{
     void onScroll(final float mobileViewTopY) {
         mScrollDistance += mOriginalY - mobileViewTopY;
         mOriginalY = mobileViewTopY;
-        LogUtil.e(TAG, "on scroll----------> mOriginalY is " + mOriginalY
+        LogUtil.d(TAG, "on scroll----------> mOriginalY is " + mOriginalY
                 + " and scroll distance is " + mScrollDistance);
+        LogUtil.e(TAG, "onScroll-------->mobileViewTopY is " + mobileViewTopY);
     }
 
     /**
@@ -104,6 +107,7 @@ public class HoverDrawable extends BitmapDrawable{
      * @return the number of pixels.
      */
     int getDeltaY() {
+//        LogUtil.e(TAG, "top is " + getBounds().top + " and mOriginalY is " + mOriginalY);
         return (int) (getBounds().top - mOriginalY);
     }
 
@@ -119,7 +123,7 @@ public class HoverDrawable extends BitmapDrawable{
      */
     void setTop(final int top) {
         setBounds(getBounds().left, top, getBounds().left + getIntrinsicWidth(), top + getIntrinsicHeight());
-        LogUtil.e(TAG, "setTop-------------> the bounds top is " + getBounds().top);
+//        LogUtil.e(TAG, "setTop-------------> the bounds top is " + getBounds().top);
     }
 
     /**

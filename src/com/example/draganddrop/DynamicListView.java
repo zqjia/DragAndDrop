@@ -1,11 +1,9 @@
 package com.example.draganddrop;
 
-import java.util.Collection;
-import java.util.HashSet;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -44,9 +42,9 @@ public class DynamicListView extends ListView {
     }
     
     public void enableDragAndDrop() {
-//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-//            throw new UnsupportedOperationException("Drag and drop is only supported API levels 14 and up!");
-//        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            throw new UnsupportedOperationException("Drag and drop is only supported API levels 9 and up!");
+        }
 
         mDragAndDropHandler = new DragAndDropHandler(this);
     }
@@ -57,7 +55,7 @@ public class DynamicListView extends ListView {
         if (mDragAndDropHandler != null) {
             mDragAndDropHandler.setAdapter(adapter);
         } else {
-            LogUtil.e(TAG, "DragAndDropHandler is null and can't support drag now");
+            LogUtil.e(TAG, "DragAndDropHandler is null and can't support drag now, set adapter failure");
         }
     }
     
@@ -82,26 +80,28 @@ public class DynamicListView extends ListView {
     @Override
     public boolean onTouchEvent(final MotionEvent ev) {
         
+        if (mCurrentTouchEventHandler == null) {
+            return super.onTouchEvent(ev);
+        }
+        
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             int x = (int)ev.getX();
             int y = (int)ev.getY();
             
             int dragPosition = pointToPosition(x, y);
             if (dragPosition == AdapterView.INVALID_POSITION) {
-                return super.dispatchTouchEvent(ev);
+                return super.onTouchEvent(ev);
             }
             ViewGroup dragItemView = (ViewGroup)getChildAt(dragPosition);
-            if (dragItemView != null) {
+            if (dragItemView != null && mDragAndDropHandler != null) {
                 if (mDragAndDropHandler.getDraggableManager().isDraggable(dragItemView, dragPosition, x, y)) {
                     startDragging(dragPosition);
                 }
             }
         }
         
-        //这里完成对事件的处理
-        if (mCurrentTouchEventHandler != null) {
-            mCurrentTouchEventHandler.onTouchEvent(ev);
-        }
+        //handle touch event by mCurrentTouchEventHandler
+        mCurrentTouchEventHandler.onTouchEvent(ev);
 
         if (ev.getActionMasked() == MotionEvent.ACTION_UP 
                 || ev.getActionMasked() == MotionEvent.ACTION_CANCEL) {
@@ -166,28 +166,29 @@ public class DynamicListView extends ListView {
     
     private class DynamicOnScrollListener implements OnScrollListener {
 
-        private Collection<OnScrollListener> mOnScrollListeners = new HashSet<OnScrollListener>();
+        private OnScrollListener mOnScrollListener;
+        
+        public DynamicOnScrollListener() {
+            
+        }
         
         @Override
         public void onScrollStateChanged(AbsListView view, int scrollState) {
-            if (mOnScrollListeners != null) {
-                for (OnScrollListener onScrollListener : mOnScrollListeners)
-                onScrollListener.onScrollStateChanged(view, scrollState);
+            if (mOnScrollListener != null) {
+                mOnScrollListener.onScrollStateChanged(view, scrollState);
             }
         }
 
         @Override
         public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
                 int totalItemCount) {
-            if (mOnScrollListeners != null) {
-                for (OnScrollListener onScrollListener : mOnScrollListeners) {
-                    onScrollListener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
-                }
+            if (mOnScrollListener != null) {
+                mOnScrollListener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
             }
         }
         
         public void setOnScrollListener(OnScrollListener listener) {
-            mOnScrollListeners.add(listener);
+            mOnScrollListener = listener;
         }
     }
 }

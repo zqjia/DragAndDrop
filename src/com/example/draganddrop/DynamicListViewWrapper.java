@@ -88,4 +88,9 @@ public class DynamicListViewWrapper implements DragAndDropListViewWrapper {
         return mDynamicListView.computeVerticalScrollRange();
     }
 
+    @Override
+    public void smoothScrollToPosition(int position) {
+        mDynamicListView.smoothScrollToPosition(position);
+    }
+
 }
