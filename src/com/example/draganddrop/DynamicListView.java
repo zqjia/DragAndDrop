@@ -43,7 +43,7 @@ public class DynamicListView extends ListView {
     
     public void enableDragAndDrop() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
-            throw new UnsupportedOperationException("Drag and drop is only supported API levels 9 and up!");
+            throw new UnsupportedOperationException("Drag and drop is only supported API levels 8 and up!");
         }
 
         mDragAndDropHandler = new DragAndDropHandler(this);
@@ -55,7 +55,7 @@ public class DynamicListView extends ListView {
         if (mDragAndDropHandler != null) {
             mDragAndDropHandler.setAdapter(adapter);
         } else {
-            LogUtil.e(TAG, "DragAndDropHandler is null and can't support drag now, set adapter failure");
+            LogUtil.e(TAG, "DragAndDropHandler is null and can't support drag now");
         }
     }
     
@@ -82,22 +82,6 @@ public class DynamicListView extends ListView {
         
         if (mCurrentTouchEventHandler == null) {
             return super.onTouchEvent(ev);
-        }
-        
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            int x = (int)ev.getX();
-            int y = (int)ev.getY();
-            
-            int dragPosition = pointToPosition(x, y);
-            if (dragPosition == AdapterView.INVALID_POSITION) {
-                return super.onTouchEvent(ev);
-            }
-            ViewGroup dragItemView = (ViewGroup)getChildAt(dragPosition);
-            if (dragItemView != null && mDragAndDropHandler != null) {
-                if (mDragAndDropHandler.getDraggableManager().isDraggable(dragItemView, dragPosition, x, y)) {
-                    startDragging(dragPosition);
-                }
-            }
         }
         
         //handle touch event by mCurrentTouchEventHandler

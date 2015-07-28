@@ -4,32 +4,30 @@ package com.example.draganddrop;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import com.example.draganddrop.test.BookmarkBean;
+import com.example.draganddrop.test.DragAndDropAdapter;
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.AnimatorListenerAdapter;
 import com.nineoldandroids.animation.ObjectAnimator;
 import com.nineoldandroids.animation.ValueAnimator;
 
-//import android.animation.Animator;
-//import android.animation.AnimatorListenerAdapter;
-//import android.animation.ValueAnimator;
-
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.Nullable;
-import android.support.v4.widget.ListViewAutoScrollHelper;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
-import android.widget.ListView;
+import android.widget.TextView;
 
 public class DragAndDropHandler implements TouchEventHandler {
 
@@ -114,14 +112,6 @@ public class DragAndDropHandler implements TouchEventHandler {
      * as result of an up / cancel event.
      */
     private boolean mIsSettlingHoverDrawable;
-    
-    /**
-     * ListView AutoScroll Helper
-     * */
-    private ListViewAutoScrollHelper mScrollHelper;
-    
-    private static final int MOVE_DOWN = 1;
-    private static final int MOVE_UP = -1;
 
     public DragAndDropHandler(DynamicListView dynamicListView) {
         this(new DynamicListViewWrapper(dynamicListView));
@@ -149,16 +139,24 @@ public class DragAndDropHandler implements TouchEventHandler {
                 .get(mDragAndDropListViewWrapper.getListView().getContext());
         mSlop = vc.getScaledTouchSlop();
         
-        /* init the scroll helper*/
-        mScrollHelper = new ListViewAutoScrollHelper((ListView)mDragAndDropListViewWrapper.getListView());
+        if (mDragAndDropListViewWrapper.getListView().getChildCount() != 0) {
+            mSlop = Math.min(mSlop, mDragAndDropListViewWrapper.getListView().getChildAt(0).getMeasuredHeight()/8);
+        }
     }
 
     public void setAdapter(final ListAdapter adapter) {
-        if (!(adapter instanceof Swappable)) {
-            LogUtil.e(TAG, "the adapter have not implement the Swappable interface");
-            return;
+        
+        //TODO
+        /* 只改变绘制，不需要实现交换接口  */
+//        if (!(adapter instanceof Swappable)) {
+//            LogUtil.e(TAG, "the adapter have not implement the Swappable interface");
+//            return;
+//        }
+        if (adapter != null) {
+            mAdapter = adapter;
+        } else {
+            LogUtil.e(TAG, "--------->adapter is null");
         }
-        mAdapter = adapter;
     }
 
     /**
@@ -208,10 +206,6 @@ public class DragAndDropHandler implements TouchEventHandler {
             mHoverDrawable = new HoverDrawable(mMobileView, mLastMotionEventY);
             mMobileView.setVisibility(View.INVISIBLE);
             LogUtil.e(TAG, "start dragging-------------->set mMobileView invisible");
-//            if (mMobileView.getBackground() == null) {
-//                LogUtil.e(TAG, "mobile view backgound is null");
-//            }
-            
         } else {
             LogUtil.e(TAG, "start drag fail---------->mobile view is null");
         }
@@ -292,6 +286,18 @@ public class DragAndDropHandler implements TouchEventHandler {
     private boolean handleDownEvent(final MotionEvent event) {
         mDownX = event.getRawX();
         mDownY = event.getRawY();
+        
+        int dragPosition = mDragAndDropListViewWrapper.pointToPosition((int)event.getX(), (int)event.getY());
+        if (dragPosition != DynamicListView.INVALID_POSITION) {
+            ViewGroup dragItemView = (ViewGroup)mDragAndDropListViewWrapper.getChildAt(dragPosition - mDragAndDropListViewWrapper.getFirstVisiblePosition());
+            if (dragItemView != null ) {
+                if (getDraggableManager().isDraggable(dragItemView, dragPosition - mDragAndDropListViewWrapper.getHeaderViewsCount(), 
+                        event.getX(), event.getY())) {
+                    startDragging(dragPosition);
+                }
+            }
+        }
+        
         return true;
     }
 
@@ -357,41 +363,21 @@ public class DragAndDropHandler implements TouchEventHandler {
         float deltaX = event.getRawX() - mDownX;
         float deltaY = event.getRawY() - mDownY;
 
-        // LogUtil.d(TAG, "mDownX is " + mDownX + " mDownY is " + mDownY
-        // + " deltaX is " + deltaX + " deltaY is " + deltaY);
-
-        if (mHoverDrawable == null && Math.abs(deltaY) > mSlop && Math.abs(deltaY) > Math
-                .abs(deltaX)) { /* have not start dragging but should start */
-            int position = mDragAndDropListViewWrapper.pointToPosition((int)event.getX(),
-                    (int)event.getY());
+        if (mHoverDrawable == null && Math.abs(deltaY) > mSlop && Math.abs(deltaY) > Math.abs(deltaX)) { 
+            /* have not start dragging but should start */
+            int position = mDragAndDropListViewWrapper.pointToPosition((int)event.getX(), (int)event.getY());
             if (position != AdapterView.INVALID_POSITION) {
                 View downView = mDragAndDropListViewWrapper.getChildAt(
                         position - mDragAndDropListViewWrapper.getFirstVisiblePosition());
                 assert downView != null;
-                if (mDraggableManager.isDraggable(downView,
-                        position - mDragAndDropListViewWrapper.getHeaderViewsCount(),
+                if (mDraggableManager.isDraggable(downView, position - mDragAndDropListViewWrapper.getHeaderViewsCount(),
                         event.getX() - downView.getLeft(), event.getY() - downView.getTop())) {
                     startDragging(position - mDragAndDropListViewWrapper.getHeaderViewsCount()); // start
                                                                                                  // dragging
                     handled = true;
                 }
-                // if (mDraggableManager.isDraggable(downView, position -
-                // mDragAndDropListViewWrapper.getHeaderViewsCount()
-                // , event.getX() - downView.getX(), event.getY() -
-                // downView.getY())) {
-                // startDragging(position -
-                // mDragAndDropListViewWrapper.getHeaderViewsCount()); //start
-                // dragging
-                // handled = true;
-                // }
             }
         } else if (mHoverDrawable != null) { /* handle dragging */
-            
-//            View mobileView = getViewForId(mMobileItemId);
-//            LogUtil.e(TAG, "mobile view visibility is " + mobileView.getVisibility());
-//            if (mobileView.getBackground() == null) {
-//                LogUtil.e(TAG, "mobile view background is null");
-//            }
             
             mHoverDrawable.handleMoveEvent(event);
 
@@ -415,25 +401,18 @@ public class DragAndDropHandler implements TouchEventHandler {
         int position = getPositionForId(mMobileItemId); // mMobileItemId指代view对应的hashCode，这个函数通过这个id获取其在ListView中的位置
         /* get the above item id */
         long aboveItemId = position - 1 - mDragAndDropListViewWrapper.getHeaderViewsCount() >= 0
-                ? mAdapter
-                        .getItemId(position - 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
+                ? mAdapter.getItemId(position - 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
                 : INVALID_ID;
         /* get the below item id */
-        long belowItemId = position + 1
-                - mDragAndDropListViewWrapper.getHeaderViewsCount() < mAdapter.getCount() ? mAdapter
-                        .getItemId(position + 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
-                        : INVALID_ID;
-        // LogUtil.e(TAG, "above id is " + aboveItemId + " below id is " +
-        // belowItemId);
+        long belowItemId = position + 1 - mDragAndDropListViewWrapper.getHeaderViewsCount() < mAdapter.getCount() 
+                ? mAdapter.getItemId(position + 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
+                : INVALID_ID;
 
         final long switchId = mHoverDrawable.isMovingUpwards() ? aboveItemId : belowItemId;
         View switchView = getViewForId(switchId);
 
         final int deltaY = mHoverDrawable.getDeltaY();
-        if (switchView != null && Math.abs(deltaY) > mHoverDrawable.getIntrinsicHeight() * 2 / 3) {
-            LogUtil.d(TAG, "swift view--------->" + "delta y is " + deltaY
-                    + " and HoverDrawable height is " + mHoverDrawable.getIntrinsicHeight());
-            LogUtil.e(TAG, "switchIfNeccessary------->switch view id is " + switchId);
+        if (switchView != null && Math.abs(deltaY) > mHoverDrawable.getIntrinsicHeight()) {
             switchViews(switchView, switchId,
                     mHoverDrawable.getIntrinsicHeight() * (deltaY < 0 ? -1 : 1));
         }
@@ -441,16 +420,7 @@ public class DragAndDropHandler implements TouchEventHandler {
         /* handle the situation of dragging the item to the top or bottom */
         mScrollHandler.handleMobileCellScroll();
 
-        mDragAndDropListViewWrapper.getListView().invalidate();
-
-        // FIXME
-        // test the data after switch
-        // ArrayList<BookmarkBean> data =
-        // ((DragAndDropAdapter)mDragAndDropListViewWrapper.getAdapter()).getData();
-        // for(int i=0,total=data.size(); i<total; ++i) {
-        // BookmarkBean item = data.get(i);
-        // LogUtil.e(TAG, "data is " + item.getTitle());
-        // }
+//        mDragAndDropListViewWrapper.getListView().invalidate();
     }
 
     /**
@@ -471,21 +441,17 @@ public class DragAndDropHandler implements TouchEventHandler {
         assert mAdapter != null;
         assert mMobileView != null;
 
-        final int switchViewPosition = mDragAndDropListViewWrapper.getPositionForView(switchView);
-
         int mobileViewPosition = mDragAndDropListViewWrapper.getPositionForView(mMobileView);
         long mobileViewId = mAdapter.getItemId(mobileViewPosition);
-        LogUtil.e(TAG, "switch view position is " + switchViewPosition
-                + " and mobile view position is " + mobileViewPosition);
 
         // FIXME
         mSwitchViewAnimator.animateSwitchView(mobileViewId, switchId, translationY);
         // mSwitchViewAnimator.animateSwitchView(switchId, translationY);
 
-        ((Swappable)mAdapter).swapItems(
-                switchViewPosition - mDragAndDropListViewWrapper.getHeaderViewsCount(),
-                mobileViewPosition - mDragAndDropListViewWrapper.getHeaderViewsCount());
-        ((BaseAdapter)mAdapter).notifyDataSetChanged();
+//        ((Swappable)mAdapter).swapItems(
+//                switchViewPosition - mDragAndDropListViewWrapper.getHeaderViewsCount(),
+//                mobileViewPosition - mDragAndDropListViewWrapper.getHeaderViewsCount());
+//        ((BaseAdapter)mAdapter).notifyDataSetChanged();
 
         mHoverDrawable.shift(switchView.getHeight());
     }
@@ -510,8 +476,6 @@ public class DragAndDropHandler implements TouchEventHandler {
         private int mCount = 0;
         private Method mTrackMethod;
 
-        private boolean mIsOnScrollCallInTrack = true;
-        
         /**
          * The default scroll amount in pixels.
          */
@@ -553,10 +517,8 @@ public class DragAndDropHandler implements TouchEventHandler {
                             int.class, int.class);
                     mTrackMethod.setAccessible(true);
                 } catch (SecurityException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 } catch (NoSuchMethodException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -588,7 +550,6 @@ public class DragAndDropHandler implements TouchEventHandler {
             int extent = mDragAndDropListViewWrapper.computeVerticalScrollExtent();
             int range = mDragAndDropListViewWrapper.computeVerticalScrollRange();
             int hoverViewTop = r.top;
-//            int hoverHeight = r.height();
             int hoverViewBottom = r.bottom;
 
             final int scrollPx = (int)Math.max(1, mSmoothScrollPx * mScrollSpeedFactor);
@@ -602,10 +563,6 @@ public class DragAndDropHandler implements TouchEventHandler {
 
                                 @Override
                                 public void run() {
-                                    
-                                    if (mScrollHelper.canTargetScrollVertically(MOVE_UP)) {
-                                        mScrollHelper.scrollTargetBy(0, -scrollPx);
-                                    }
                                     
                                     try {
                                         mTrackMethod.invoke(mDragAndDropListViewWrapper.getListView(),
@@ -621,7 +578,6 @@ public class DragAndDropHandler implements TouchEventHandler {
                             }, mCount * AUTO_SCROLL_TIME);
                             mCount++;
                         }
-
                     } catch (SecurityException e) {
                         e.printStackTrace();
                     } catch (IllegalArgumentException e) {
@@ -639,11 +595,6 @@ public class DragAndDropHandler implements TouchEventHandler {
 
                                 @Override
                                 public void run() {
-                                    
-//                                    if (mScrollHelper.canTargetScrollVertically(MOVE_DOWN)) {
-//                                        mScrollHelper.scrollTargetBy(0, scrollPx);
-//                                    }
-                                    
                                     try {
                                         mTrackMethod.invoke(mDragAndDropListViewWrapper.getListView(),
                                                         -scrollPx, -scrollPx);
@@ -658,7 +609,6 @@ public class DragAndDropHandler implements TouchEventHandler {
                             }, mCount * AUTO_SCROLL_TIME);
                             mCount++;
                         }
-
                     } catch (SecurityException e) {
                         e.printStackTrace();
                     } catch (IllegalArgumentException e) {
@@ -674,18 +624,6 @@ public class DragAndDropHandler implements TouchEventHandler {
         public void onScroll(final AbsListView view, final int firstVisibleItem,
                 final int visibleItemCount, final int totalItemCount) {
             
-//            LogUtil.e(TAG, "------->onScroll is called, visible item count is " + visibleItemCount
-//                    + " and first visible item is " + firstVisibleItem);
-            
-            if (mIsOnScrollCallInTrack) {
-                mIsOnScrollCallInTrack = false ;
-            } else {
-                mIsOnScrollCallInTrack = true;
-                return ;
-            }
-            
-            //注意：在2.3版本中，发现layoutChildren时ListView的item的位置不稳定，顺序错位
-            //当没有出现滚动，直接返回避免一些杂乱的情况出现
             if (firstVisibleItem == mPreviousFirstVisibleItem
                     && firstVisibleItem + visibleItemCount == mCurrentLastVisibleItem) {
                 return;
@@ -701,19 +639,9 @@ public class DragAndDropHandler implements TouchEventHandler {
 
             if (mHoverDrawable != null) {
                 mMobileView = getViewForId(mMobileItemId);
-                
 
                 if (mMobileView != null) {
                     float y = mMobileView.getTop();
-                    int position = mDragAndDropListViewWrapper.getPositionForView(mMobileView);
-                    LogUtil.e(TAG, "onScroll--------->mMobileView position is " + position
-                              + " mMobileView top is " + y
-                              + " mMobileView visibility is " + mMobileView.getVisibility()
-                              );
-                    
-//                    if (mMobileView.getBackground() == null) {
-//                        LogUtil.e(TAG, "mobile view background is null");
-//                    }
                     mHoverDrawable.onScroll(y);
                 }
             }
@@ -755,12 +683,11 @@ public class DragAndDropHandler implements TouchEventHandler {
                 return;
             }
 
-            long switchItemId = position - 1
-                    - mDragAndDropListViewWrapper.getHeaderViewsCount() >= 0 ? mAdapter.getItemId(
-                            position - 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
-                            : INVALID_ID;
+            long switchItemId = position - 1 - mDragAndDropListViewWrapper.getHeaderViewsCount() >= 0 
+                    ? mAdapter.getItemId(position - 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
+                    : INVALID_ID;
+                    
             //FIXME
-//            ItemView switchView = (ItemView)getViewForId(switchItemId);
             View switchView = getViewForId(switchItemId);
             if (switchView != null) {
                 LogUtil.e(TAG, "checkFirstCellChange--------->switch position is " + getPositionForId(switchItemId));
@@ -785,10 +712,8 @@ public class DragAndDropHandler implements TouchEventHandler {
                 return;
             }
 
-            long switchItemId = position + 1
-                    - mDragAndDropListViewWrapper.getHeaderViewsCount() < mAdapter.getCount()
-                            ? mAdapter.getItemId(position + 1
-                                    - mDragAndDropListViewWrapper.getHeaderViewsCount())
+            long switchItemId = position + 1 - mDragAndDropListViewWrapper.getHeaderViewsCount() < mAdapter.getCount()
+                            ? mAdapter.getItemId(position + 1 - mDragAndDropListViewWrapper.getHeaderViewsCount())
                             : INVALID_ID;
             //FIXME
             View switchView = getViewForId(switchItemId);
@@ -809,78 +734,50 @@ public class DragAndDropHandler implements TouchEventHandler {
         public void animateSwitchView(final long originId, final long switchId,
                 final float translationY) {
             assert mMobileView != null;
-            mDragAndDropListViewWrapper.getListView().getViewTreeObserver().addOnPreDrawListener(
-                    new AnimateSwitchViewOnPreDrawListener(originId, switchId, translationY));
+            
+            final View previousMobileView = getViewForId(originId);
+            final View switchView = getViewForId(switchId);
+            final int switchViewPosition = getPositionForId(switchId);
+            
+            ObjectAnimator switchViewMove = ObjectAnimator.ofFloat(switchView,
+                    "translationY", 0f, -translationY);
+            switchViewMove.addListener(new AnimatorListener() {
+                
+                @Override
+                public void onAnimationStart(Animator arg0) {
+                    
+                }
+                
+                @Override
+                public void onAnimationRepeat(Animator arg0) {
+                    
+                }
+                
+                @Override
+                public void onAnimationEnd(Animator arg0) {
+                    TextView switchViewTitleText  = (TextView)switchView.findViewById(R.id.bookmark_edit_text);
+                    String switchViewTitle = (String)switchViewTitleText.getText();
+                    TextView previousMobileViewTitleText = (TextView)previousMobileView.findViewById(R.id.bookmark_edit_text);
+                    previousMobileViewTitleText.setText(switchViewTitle);
+                    previousMobileView.setVisibility(View.VISIBLE);
+                    previousMobileView.invalidate();
+                    
+                    switchView.clearAnimation();
+                    switchView.setVisibility(View.INVISIBLE);
+                    switchView.invalidate();
+                }
+                
+                @Override
+                public void onAnimationCancel(Animator arg0) {
+                    
+                }
+            });
+            
+            switchViewMove.start();
+            mMobileItemId = switchId;
             mMobileView = getViewForId(mMobileItemId);
         }
 
-        private class AnimateSwitchViewOnPreDrawListener
-                implements ViewTreeObserver.OnPreDrawListener {
-
-            private final View mPreviousMobileView;
-            private final long mSwitchId;
-            private final float mTranslationY;
-
-            AnimateSwitchViewOnPreDrawListener(final long originId, final long switchId,
-                    final float translationY) {
-                mPreviousMobileView = getViewForId(originId);
-                mSwitchId = switchId;
-                mTranslationY = translationY;
-            }
-
-            @Override
-            public boolean onPreDraw() {
-                mDragAndDropListViewWrapper.getListView().getViewTreeObserver()
-                        .removeOnPreDrawListener(this);
-
-                View switchView = getViewForId(mSwitchId);
-                if (switchView != null) {
-                    ObjectAnimator switchViewMove = ObjectAnimator.ofFloat(switchView,
-                            "translationY", mTranslationY, 0f);
-//                    LogUtil.e(TAG, "onPreDraw------>switch view position is " 
-//                            + mDragAndDropListViewWrapper.getPositionForView(switchView));
-//                    switchViewMove.setDuration(150l);
-                    switchViewMove.start();
-                    switchViewMove.addListener(new AnimatorListener() {
-                        
-                        @Override
-                        public void onAnimationStart(Animator arg0) {
-                            // TODO Auto-generated method stub
-                            LogUtil.e(TAG, "animation start");
-                        }
-                        
-                        @Override
-                        public void onAnimationRepeat(Animator arg0) {
-                            
-                        }
-                        
-                        @Override
-                        public void onAnimationEnd(Animator arg0) {
-                            LogUtil.e(TAG, "animation end");
-                        }
-                        
-                        @Override
-                        public void onAnimationCancel(Animator arg0) {
-                            
-                        }
-                    });
-                }
-                
-                // FIXME
-                // ensure the mobile view
-                // 下面事件的发生，与动画的时序关系是怎样子的，动画start？end？    
-                // 尝试过在start，end中调用，以及end中延迟postRunnable中，都是有问题的
-                // 
-                mPreviousMobileView.setVisibility(View.VISIBLE);
-                mMobileView = getViewForId(mMobileItemId);
-                int position = getPositionForId(mMobileItemId);
-                LogUtil.e(TAG, "onPreDraw------>mobile view position is " + position);
-                if (mMobileView != null) {
-                    mMobileView.setVisibility(View.INVISIBLE);
-                }
-                return false;
-            }
-        }
     }
 
     /**
@@ -1007,7 +904,19 @@ public class DragAndDropHandler implements TouchEventHandler {
         @Override
         public void onAnimationEnd(final Animator animation) {
             mAnimatingMobileView.setVisibility(View.VISIBLE);
-
+            
+            View lastMobileView = getViewForId(mMobileItemId);
+            TextView lastMobileViewText = (TextView)lastMobileView.findViewById(R.id.bookmark_edit_text);
+            String lastMobileViewTile = ((BookmarkBean)mAdapter.getItem(mOriginalMobileItemPosition)).getTitle();
+            lastMobileViewText.setText(lastMobileViewTile);
+            
+            int dropPosition = getPositionForId(mMobileItemId);
+            LogUtil.e(TAG, "origin position is " + mOriginalMobileItemPosition 
+                    + " last position is " + dropPosition);
+            
+            ((DragAndDropAdapter)mAdapter).handleData(mOriginalMobileItemPosition, dropPosition);
+//            ((BaseAdapter)mAdapter).notifyDataSetChanged();
+            
             mHoverDrawable = null;
             mMobileView = null;
             mMobileItemId = INVALID_ID;

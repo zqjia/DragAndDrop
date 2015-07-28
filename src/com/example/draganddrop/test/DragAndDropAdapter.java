@@ -17,7 +17,7 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class DragAndDropAdapter extends BaseAdapter implements Swappable {
+public class DragAndDropAdapter extends BaseAdapter {
 
     private static final String TAG = DragAndDropAdapter.class.getSimpleName();
 
@@ -96,7 +96,7 @@ public class DragAndDropAdapter extends BaseAdapter implements Swappable {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         
-        LogUtil.e(TAG, "----------->getView");
+//        LogUtil.e(TAG, "----------->getView");
         
         final BookmarkBean item = (BookmarkBean)getItem(position);
         if (item == null) {
@@ -222,10 +222,29 @@ public class DragAndDropAdapter extends BaseAdapter implements Swappable {
      * @param positionOne the position of the first item in the list
      * @param positionTwo the position of the second item in the list
      * */
-    @Override
-    public void swapItems(int positionOne, int positionTwo) {
-        BookmarkBean firstItem = mDataList.set(positionOne, (BookmarkBean)getItem(positionTwo));
-        mDataList.set(positionTwo, firstItem);
+//    @Override
+//    public void swapItems(int positionOne, int positionTwo) {
+//        BookmarkBean firstItem = mDataList.set(positionOne, (BookmarkBean)getItem(positionTwo));
+//        mDataList.set(positionTwo, firstItem);
+//    }
+    
+    public void handleData(int firstPosition, int lastPosition) {
+        //不能用下面这种方式，因为temp存储的是一个引用，下面会对该引用进行赋值，那么temp引用也就改变了，达不到暂时存储的目的
+        //BookmarkBean temp = mDataList.get(firstPosition)
+        BookmarkBean temp = new BookmarkBean(mDataList.get(firstPosition));
+        
+        if (firstPosition < lastPosition) {
+            for (int i=firstPosition; i<lastPosition; ++i) {
+                mDataList.get(i).setBookmarkBean(mDataList.get(i+1));
+            }
+        } else if (firstPosition > lastPosition){
+            for (int i=firstPosition; i>lastPosition; --i) {
+                mDataList.get(i).setBookmarkBean(mDataList.get(i-1));
+            }
+        }
+        
+        mDataList.get(lastPosition).setBookmarkBean(temp);
+        notifyDataSetChanged();
     }
 
     private class ViewHolder {

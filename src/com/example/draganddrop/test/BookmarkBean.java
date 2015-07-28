@@ -10,10 +10,22 @@ public class BookmarkBean {
         
     }
     
+    public BookmarkBean(BookmarkBean bookmarkBean) {
+        mTitle = bookmarkBean.getTitle();
+        mUrl = bookmarkBean.getUrl();
+        mIsInEdit = bookmarkBean.getIsEdit();
+    }
+    
     public BookmarkBean(String title, String url, boolean isEdit) {
         mTitle = title;
         mUrl = url;
         mIsInEdit = isEdit;
+    }
+    
+    public void setBookmarkBean(BookmarkBean bookmarkBean) {
+        mTitle = bookmarkBean.getTitle();
+        mUrl = bookmarkBean.getUrl();
+        mIsInEdit = bookmarkBean.getIsEdit();
     }
     
     public void setTitle(String title) {
